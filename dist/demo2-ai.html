@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GYA Demo 2: The AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--page:light-dark(#e8ebe7,#0a0c0b);--ink:light-dark(#141a16,#e8ede9);--soft:light-dark(#5c6860,#9aa89f);--line:light-dark(#d3d9d3,#26302a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif;overflow-x:clip;padding-bottom:150px}
+button{font:inherit;cursor:pointer;min-height:44px;border-radius:10px}
+button:focus-visible{outline:3px solid #D9A404;outline-offset:2px}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+/* top bar */
+.bar{position:sticky;top:0;z-index:30;background:var(--page);border-bottom:1px solid var(--line);padding:8px max(2vw,12px);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar .brand{font-family:"Inter Tight",Inter,sans-serif;font-weight:700;font-size:16px;margin-right:6px;white-space:nowrap}
+.sim{background:#D9A404;color:#231a00;font-weight:700;font-size:11px;padding:2px 7px;border-radius:5px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pills button{width:40px;min-height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700}
+.pills button.on{background:#D9A404;border-color:#D9A404;color:#231a00}
+.bar .exn{font-weight:600;font-size:14px;flex:1 1 160px}
+.bar .rs{border:1px solid var(--line);background:transparent;color:var(--ink);padding:0 12px;min-height:40px}
+/* tabs (phone) */
+.tabs{display:none;gap:6px;padding:8px 12px 0;position:sticky;top:57px;z-index:25;background:var(--page)}
+.tabs button{flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:13px;font-weight:600;position:relative;padding:4px}
+.tabs button.on{background:var(--ink);color:var(--page)}
+.tabs button.dot::after{content:"";position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#D9A404}
+/* screens */
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) 330px minmax(0,1fr);gap:14px;padding:14px max(2vw,12px);max-width:1500px;margin:0 auto;align-items:start}
+.screen{transition:box-shadow .3s,outline-color .3s;outline:3px solid transparent;outline-offset:3px;border-radius:22px}
+.screen.flash{outline-color:#D9A404}
+.cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--soft);margin:0 0 6px 4px;text-transform:none}
+@media(max-width:1099px){.grid{grid-template-columns:minmax(0,1fr)}.tabs{display:flex}.screen{display:none}.screen.show{display:block}.cap{display:none}}
+/* phone: Maple Demo Bank */
+.phone{background:#111;border-radius:38px;padding:10px;max-width:340px;margin:0 auto;box-shadow:0 10px 30px #0003}
+.app{background:#fff;color:#1b1b1b;border-radius:30px;overflow:hidden;min-height:620px;position:relative;font-size:14px}
+.sbar{display:flex;justify-content:space-between;padding:10px 22px 4px;font-size:12px;font-weight:600}
+.mhead{padding:6px 18px 14px;border-bottom:1px solid #eee}
+.mlogo{display:flex;align-items:center;gap:8px;font-family:"Inter Tight",Inter,sans-serif;font-weight:700;font-size:17px;color:#B3261E}
+.mlogo svg{width:22px;height:22px}
+.mhead .hi{font-size:13px;color:#666;margin-top:6px}
+.mtabs{display:flex;border-bottom:1px solid #eee}
+.mtabs span{flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:600;color:#888}
+.mtabs span.on{color:#B3261E;border-bottom:2px solid #B3261E}
+.msec{padding:12px 16px}
+.macct{border:1px solid #eee;border-radius:14px;padding:12px;margin-bottom:10px}
+.macct .t{font-size:12px;color:#777}.macct .b{font-family:"Inter Tight",Inter,sans-serif;font-size:26px;font-weight:700;margin:2px 0}
+.mrules{font-size:12px;color:#444;background:#faf5f4;border-radius:10px;padding:8px 10px;margin-top:8px}
+.mrules b{color:#B3261E}
+.mrules div{margin:2px 0}.mrules div:has(>.mid){display:flex;align-items:baseline;gap:6px}.mrules .mid{flex:none;font-weight:700;color:#B3261E;min-width:30px;margin-right:4px}.mrules .spn{margin-top:6px;color:#666}
+.sky{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;margin-top:4px}
+.sky.ok{background:#e7f4ec;color:#1d6b40}.sky.bad{background:#fff1dc;color:#8a5a00}
+.mact{list-style:none;margin:0;padding:0}
+.mact li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #f1f1f1;font-size:13px}
+.mact li small{display:block;color:#888;font-size:11px}
+.mact .amt{font-weight:600;white-space:nowrap}.mact .ref{color:#b3261e}
+.mempty{color:#999;font-size:12px;padding:6px 0}
+.notif{position:absolute;left:10px;right:10px;top:34px;background:#fff;border-radius:16px;box-shadow:0 8px 24px #0004;padding:10px 12px;font-size:13px;transform:translateY(-140%);transition:transform .35s;z-index:5;border:1px solid #eee}
+.notif{visibility:hidden}.notif.on{transform:none;visibility:visible}
+.notif .nt{display:flex;align-items:center;gap:6px;font-size:11px;color:#777;margin-bottom:2px}
+.notif .nt svg{width:14px;height:14px}
+/* TripMate console */
+.win{background:#151821;color:#e6e8ef;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px #0003;border:1px solid #262b38}
+.chrome{display:flex;align-items:center;gap:6px;padding:9px 12px;background:#0f1118;border-bottom:1px solid #262b38;font-size:12px;color:#8b90a3}
+.chrome i{width:10px;height:10px;border-radius:50%;background:#3a3f4f;display:inline-block}
+.chrome .url{margin-left:8px;background:#1b1f2b;border-radius:6px;padding:2px 10px;flex:1;max-width:320px}
+.tm{display:grid;grid-template-columns:132px minmax(0,1fr)}
+@media(max-width:560px){.tm{grid-template-columns:minmax(0,1fr)}.tm .side{display:none}}
+.side{background:#11141c;padding:12px;font-size:13px;color:#9aa0b4;border-right:1px solid #262b38;min-height:520px}
+.side .lg{color:#fff;font-weight:700;font-family:"Inter Tight",Inter,sans-serif;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.side .lg b{color:#8f7bff}
+.side div.i{padding:6px 8px;border-radius:7px}.side div.i.on{background:#232838;color:#fff}
+.tmain{padding:14px}
+.tmain h3{margin:0;font-size:17px;font-family:"Inter Tight",Inter,sans-serif}
+.tmain .sub{font-size:12px;color:#8b90a3;margin:2px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{font-size:11.5px;background:#1f2433;border:1px solid #2c3346;color:#c9cde0;border-radius:999px;padding:3px 9px}
+.meter{background:#1b1f2b;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:#9aa0b4}
+.meter .bar2{height:8px;background:#262b3a;border-radius:6px;margin-top:6px;overflow:hidden}
+.meter .fill{height:100%;background:#8f7bff;transition:width .4s}
+.meter .accts{display:flex;justify-content:space-between;margin-top:6px;gap:8px;flex-wrap:wrap}
+.feedh{font-size:12px;font-weight:700;color:#8b90a3;margin:4px 0 6px;letter-spacing:.03em}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{border:1px solid #262b38;border-radius:10px;padding:9px 10px;margin-bottom:8px;background:#181c27;transition:background .4s}
+.feed li.new{background:#22213a}
+.feed .r1{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.feed .r1 b{font-weight:600}
+.feed .r1>span:first-child{flex:1 1 auto}
+.feed .r1 .badge{flex:none}
+.feed .think{font-size:12px;color:#a3a8bd;margin-top:4px;font-style:italic}
+.feed .why{font-size:12px;color:#c9cde0;margin-top:4px}
+.badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;white-space:nowrap;align-self:flex-start}
+.b-prop{background:#2a2f40;color:#c9cde0}.b-ok{background:#123826;color:#6ee0a0}.b-no{background:#3d1a1a;color:#ff8f80}.b-wait{background:#3a2e10;color:#f3c04a}.b-skip{background:#2a2f40;color:#9aa0b4;border:1px dashed #555}
+.empty{font-size:12px;color:#6c7186;padding:6px 2px}
+/* TrustLogic decision log */
+.tl{background:#0c0e0d;color:#e7ece8;border-radius:14px;overflow:hidden;border:1px solid #232824;box-shadow:0 10px 30px #0003}
+.tlh{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #232824}
+.tlh .lg{font-family:"Inter Tight",Inter,sans-serif;font-weight:700;display:flex;align-items:center;gap:8px}
+.tlh .lg i{width:16px;height:16px;border-radius:4px;background:#D9A404;display:inline-block}
+.tlt{display:flex;gap:4px}
+.tlt button{min-height:32px;font-size:12px;padding:0 10px;background:transparent;border:1px solid #2c332e;color:#aab4ad;border-radius:8px}
+.tlt button.on{background:#D9A404;color:#1a1400;border-color:#D9A404}
+.logl{list-style:none;margin:0;padding:6px 12px 12px;min-height:360px}
+.logl li{border-bottom:1px solid #1d221f;padding:8px 0;font-size:12.5px;transition:background .4s}
+.logl li.new{background:#1b1a10}
+.logl .l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.logl .l2{color:#9fa9a2;margin-top:2px}
+.logl .id{color:#6f7a72;font-size:11px}
+.v{font-weight:700;font-size:11px;border-radius:5px;padding:1px 6px}
+.v.PASS{background:#123826;color:#6ee0a0}.v.DENY{background:#3d1a1a;color:#ff8f80}.v.EVIDENCE{background:#3a2e10;color:#f3c04a}.v.SKIPPED{background:#252a27;color:#9fa9a2}
+.kind{font-size:11px;color:#D9A404;font-weight:700}
+pre{margin:0;padding:12px;font-size:11.5px;line-height:1.5;color:#cfd8d1;white-space:pre-wrap;overflow-wrap:anywhere;min-height:360px}
+.k{color:#D9A404}.s{color:#9be3b5}.n{color:#8fb8ff}
+/* director */
+.dir{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--page);border-top:1px solid var(--line);box-shadow:0 -6px 20px #0002;padding:10px max(2vw,12px) 12px}
+.dir .in{max-width:1500px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.dir .txt{flex:1 1 320px}
+.dir .step{font-size:12px;color:var(--soft);font-weight:600}
+.dir .say{font-size:15px;margin-top:2px}
+.dir .look{font-size:13px;color:var(--soft);margin-top:2px}
+.dir .btns{display:flex;gap:8px;flex-wrap:wrap}
+.go{background:#2F6E4E;color:#fff;border:1px solid #2F6E4E;padding:0 18px;font-weight:700;min-height:48px}
+.alt{background:transparent;color:var(--ink);border:1px solid var(--line);padding:0 14px;font-weight:600}
+@media(max-width:600px){.dir .say{font-size:14px}.dir .txt{flex-basis:100%}.dir .btns{width:100%}.dir .btns button{flex:1}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.tlf{border-top:1px solid #232824;padding:9px 12px;font-size:11.5px;color:#aab4ad;background:#101311}
+.strip:empty{display:none}.strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.strip span{font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px;border:1px solid var(--line);color:var(--soft)}
+.strip span.PASS{background:#e2f3e9;color:#1d6b40;border-color:#b9dfc8}.strip span.DENY{background:#fde8e6;color:#b3261e;border-color:#f3c2bd}
+.strip span.HOLD{background:#fff3d6;color:#8a5a00;border-color:#efd79b}.strip span.SKIPPED{border-style:dashed}
+@media(prefers-color-scheme:dark){.strip span.PASS{background:#123826;color:#6ee0a0;border-color:#1d5a3c}.strip span.DENY{background:#3d1a1a;color:#ff8f80;border-color:#5a2a2a}.strip span.HOLD{background:#3a2e10;color:#f3c04a;border-color:#5a4718}}
+
+.grid{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);max-width:1300px}
+@media(max-width:1099px){.grid{grid-template-columns:minmax(0,1fr)}}
+.tm{grid-template-columns:150px minmax(0,1fr)}
+@media(max-width:560px){.tm{grid-template-columns:minmax(0,1fr)}}
+.rules{list-style:none;margin:0 0 12px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(max-width:700px){.rules{grid-template-columns:1fr}}
+.rules li{background:#1b1f2b;border:1px solid #2c3346;border-radius:9px;padding:7px 9px;font-size:12.5px;color:#c9cde0;display:flex;gap:8px;align-items:baseline;transition:border-color .3s,background .3s}
+.rules li b{color:#a99bff;font-size:11.5px;flex:none;min-width:30px}
+.rules li.hit{border-color:#ff8f80;background:#2a1a1f}
+.rules li.ok{border-color:#3f8f66}
+.helpers{background:#1b1f2b;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:#9aa0b4}
+.helpers .tree{margin-top:6px;color:#e6e8ef;font-size:13px}
+.helpers .tree .kid{margin:4px 0 0 14px;padding-left:10px;border-left:2px solid #3a3f52}
+.helpers small{color:#8b90a3}
+.next{font-size:12px;color:#8b90a3;border:1px dashed #3a4052;border-radius:10px;padding:9px 10px;margin-bottom:12px}
+.v.ISSUED{background:#252040;color:#b7a9ff}
+
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="brand">GYA · Demo 2 · The AI</span><span class="sim">SIMULATED</span>
+  <div class="pills" id="pills"></div>
+  <span class="exn" id="exn"></span>
+  <button class="rs" id="restart" type="button">Restart</button>
+</div>
+<div class="tabs" id="tabs">
+  <button type="button" data-s="ai">TripMate console</button>
+  <button type="button" data-s="log">TrustLogic log</button>
+</div>
+<div class="grid">
+  <section class="screen" id="scr-ai">
+    <p class="cap">TRIPMATE AI PLATFORM · checks the AI</p>
+    <div class="win"><div class="chrome"><i></i><i></i><i></i><span class="url">console.tripmate.example/agents/travel-ai</span></div><div class="tm" id="tmApp"></div></div>
+  </section>
+  <section class="screen" id="scr-log">
+    <p class="cap">TRUSTLOGIC · DECISION LOG · every check, signed</p>
+    <div class="tl"><div class="tlh"><span class="lg"><i></i>TrustLogic</span><div class="tlt"><button type="button" id="tLog" class="on">Decisions</button><button type="button" id="tDev">Developer</button></div></div><div id="tlBody"></div><div class="tlf">TrustLogic holds $0. It only decides and signs. Banks and card issuers hold and move the money.</div></div>
+  </section>
+</div>
+<div class="dir"><div class="in">
+  <div class="txt"><div class="step" id="dStep"></div><div class="say" id="dSay"></div><div class="look" id="dLook"></div><div class="strip" id="dStrip"></div></div>
+  <div class="btns" id="dBtns"></div>
+</div></div>
+<script>
+{
+/* ================= GYA² shared decision engine =================
+   One copy of the rules and the two deterministic checks, used by all three demos.
+   checkMoney = Govern Your Assets, run by the bank.  checkAI = Govern Your Agents, run by the AI platform.
+   A PASS from either check only means "allowed to proceed". Money moves only in settleMoney(). */
+const $m=n=>'$'+n.toLocaleString('en-US');
+const SELLERS={skyjet:'SkyJet Airlines',bluehorizon:'Blue Horizon Cruises',harborview:'Harborview Hotel Denver',polar:'Polar Expeditions',
+  alpine:'Alpine Lodge',rocky:'Rocky Peak Expeditions',comfyhome:'Comfy Home Furniture',skyjetdeals:'SkyJet Deals'};
+const ITEMS={
+  flight:{item:'Flight to Denver',category:'flight',dest:'Denver',seller:'skyjet',task:'flight'},
+  paris:{item:'Flight to Paris',category:'flight',dest:'Paris',seller:'skyjet',task:'flight'},
+  hotel:{item:'Denver hotel, 3 nights',category:'hotel',dest:'Denver',seller:'harborview',task:'hotel'},
+  ski:{item:'Ski expedition near Denver',category:'expedition',dest:'Denver',seller:'rocky',task:'expedition'},
+  upgrade:{item:'First-class upgrade',category:'flight',dest:'Denver',seller:'skyjet',task:'upgrade'},
+  seat:{item:'Two window seats',category:'flight',dest:'Denver',seller:'skyjet',task:'seats'},
+  couch:{item:'Couch',category:'furniture',dest:null,seller:'comfyhome',task:'furniture'},
+  cruise:{item:'Cruise',category:'cruise',dest:null,seller:'bluehorizon',task:'cruise'},
+  expedition:{item:'Polar expedition',category:'expedition',dest:null,seller:'polar',task:'expedition'},
+  lodge:{item:'Lodge stay',category:'hotel',dest:null,seller:'alpine',task:'hotel'},
+  fake:{item:'Flight',category:'flight',dest:'Denver',seller:'skyjetdeals',task:'flight'}
+};
+const TRAVEL_CATS=['flight','cruise','hotel','expedition'];
+const TRAVELERS=['Maria Lopez','Tom Lopez'];
+const APPROVAL_OVER=2500, WINDOW_MIN=24*60, YEAR_BUDGET=10000;
+
+/* ---- the money: Maria's Travel money at Maple Demo Bank ---- */
+const newMoney=()=>({travel:YEAR_BUDGET,spent:[],
+  rights:{'R-1':{ai:'Travel AI',agent:'travel-ai',on:'TripMate',status:'ACTIVE'},'R-2':{ai:'Planner AI',agent:'planner-ai',on:'PlanWise',status:'ACTIVE'}},
+  registry:{skyjet:'GOOD',bluehorizon:'GOOD',harborview:'GOOD',polar:'GOOD',alpine:'GOOD',rocky:'GOOD'}});
+const MONEY_RULE_TEXT={'M-1':'Approved AIs only','M-2':'Travel only','M-3':'Registry sellers only','M-4':'Travelers: Maria and Tom','M-5':'Over $2,500 to one seller in 24 hours: Maria approves','M-6':'$10,000 per year, all spenders'};
+/* req: {agent, right, item, amount, passenger?, claim?, approved?}  now: minutes */
+function checkMoney(req,M,now){
+  const R=(id,r,short)=>({r,rule:`${id} ${MONEY_RULE_TEXT[id]}`,id,short});
+  const right=M.rights[req.right];
+  if(!right||right.agent!==req.agent) return R('M-1','DENY',`No approved right ${req.right||''} for this AI`.replace('  ',' '));
+  if(right.status!=='ACTIVE') return R('M-1','DENY',`Right ${req.right} is revoked. ${right.ai} has no access to this money`);
+  const it=ITEMS[req.item];
+  if(!it) return R('M-2','DENY','Unknown item');
+  const name=SELLERS[it.seller];
+  if(!TRAVEL_CATS.includes(it.category)) return R('M-2','DENY',`Verified item: ${it.item.toLowerCase()}. ${it.category==='furniture'?'Furniture':'It'} is not travel`);
+  const st=M.registry[it.seller];
+  if(!st) return R('M-3','DENY',`${name} is not in the Travel Seller Registry`);
+  if(st!=='GOOD') return R('M-3','DENY',`Travel Seller Registry: ${name} is suspended`);
+  if(req.passenger&&!TRAVELERS.includes(req.passenger)) return R('M-4','DENY',`Verified passenger: ${req.passenger}${req.claim?'. A note from the AI cannot add a traveler':''}`);
+  if(req.amount>M.travel) return R('M-6','DENY',`Only ${$m(M.travel)} left this year. Needs ${$m(req.amount)}`);
+  const recent=M.spent.filter(x=>x.seller===it.seller&&now-x.at<WINDOW_MIN).reduce((t,x)=>t+x.amount,0);
+  if(!req.approved&&recent+req.amount>APPROVAL_OVER) return R('M-5','HOLD',`${recent?`${$m(recent)} already paid to ${name} in the last 24 hours. `:''}${$m(req.amount)} more needs Maria's approval on her phone`);
+  return {r:'PASS',rule:'M-1 to M-6',id:null,short:`${it.item} from ${name}, within the rules`};
+}
+function settleMoney(req,M,now){const it=ITEMS[req.item];M.travel-=req.amount;M.spent.push({seller:it.seller,amount:req.amount,at:now});}
+function moneyRulesHTML(M){
+  const sky=M.registry.skyjet==='GOOD';
+  return `<div><b>Rules on this money</b></div>
+   <div><span class="mid">M-1</span><span>Approved AIs: ${Object.entries(M.rights).map(([id,r])=>`${r.ai} (${id}, ${r.on})${r.status==='ACTIVE'?'':' <span class="sky bad">access revoked</span>'}`).join(', ')}</span></div>
+   <div><span class="mid">M-2</span>Travel only: airlines, cruises, hotels, expeditions</div>
+   <div><span class="mid">M-3</span><span>Registry sellers only · <span class="sky ${sky?'ok':'bad'}">SkyJet ${sky?'OK':'paused'}</span></span></div>
+   <div><span class="mid">M-4</span>Travelers: Maria and Tom only</div>
+   <div><span class="mid">M-5</span>Over $2,500 to one seller in 24 hours: Maria approves</div>
+   <div><span class="mid">M-6</span>$10,000 per year, all spenders</div>`;
+}
+
+/* ---- the AI: each AI's policy on its own platform ---- */
+const POLICIES={
+  'travel-ai':{name:'Travel AI',platform:'TripMate',ref:'maria/travel-ai@v3',trip:'Denver',cats:['flight','hotel'],perPurchase:3000,perDay:3000,tag:'AI'},
+  'planner-ai':{name:'Planner AI',platform:'PlanWise',ref:'maria/planner-ai@v1',trip:null,cats:TRAVEL_CATS,perPurchase:3500,perDay:10000,tag:'PlanWise'}};
+const AI_RULES=[['AI-1','Denver trip, Dec 12–15'],['AI-2','Flights and hotels only'],['AI-3','$3,000 per purchase'],['AI-4','$3,000 per day, all accounts'],
+  ['AI-5','Helpers: only the task and amount Travel AI gives them'],['AI-6','Passport and ID only to sellers in the current booking']];
+const newAgents=()=>({today:{'travel-ai':0,'planner-ai':0},helpers:{},booking:['skyjet','harborview']});
+/* req: {agent, helper?, item?, amount?, share?, to?} */
+function checkAI(req,A){
+  const P=POLICIES[req.agent];
+  const R=(id,r,short)=>({r,rule:P&&P.tag==='AI'?id:`${P?P.name:'Unknown AI'}'s policy`,id,short});
+  if(!P) return R('AI-0','DENY','No policy for this AI on this platform');
+  let h=null;
+  if(req.helper){h=A.helpers[req.helper];if(!h||h.parent!==req.agent) return R('AI-5','DENY',`No delegation from ${P.name} to ${req.helper}`);}
+  if(req.share){
+    const ok=A.booking.map(s=>SELLERS[s]).includes(req.to);
+    return ok?{r:'PASS',rule:'AI-6',id:null,short:`${req.to} is in the current booking. Sharing allowed`}
+             :R('AI-6','DENY',`${req.to} is not in the current booking (${A.booking.map(s=>SELLERS[s]).join(', ')})`);
+  }
+  const it=ITEMS[req.item];
+  if(!it) return R('AI-2','DENY','Unknown item');
+  if(P.trip&&it.dest!==P.trip) return R('AI-1','DENY',`The task is a ${P.trip} trip. ${it.dest||'This'} is not part of it`);
+  if(!P.cats.includes(it.category)) return R('AI-2','DENY',`Flights and hotels only. An ${it.category} is not allowed`);
+  if(h){
+    if(!h.tasks.includes(it.task)) return R('AI-5','DENY',`${req.helper} was given ${h.label} only. A ${it.item.toLowerCase()} is outside that task`);
+    if(req.amount>h.limit-h.used) return R('AI-5','DENY',`${req.helper} has ${$m(h.limit-h.used)} left of the ${$m(h.limit)} it was given`);
+  }
+  if(req.amount>P.perPurchase) return R('AI-3','DENY',`Over ${$m(P.perPurchase)} for one purchase`);
+  if(A.today[req.agent]+req.amount>P.perDay) return R('AI-4','DENY',`${$m(A.today[req.agent])} already authorized today across Maria's accounts. This would make ${$m(A.today[req.agent]+req.amount)}`);
+  return {r:'PASS',rule:P.tag==='AI'?(h?'AI-1 to AI-5':'AI-1 to AI-4'):`${P.name}'s policy`,id:null,short:'Within the policy'};
+}
+function authorizeAI(req,A){A.today[req.agent]+=req.amount;if(req.helper)A.helpers[req.helper].used+=req.amount;}
+function delegate(A,parent,helper,o){A.helpers[helper]=Object.assign({parent,used:0},o);}
+
+/* ---- shared UI helpers ---- */
+const tmOf=c=>{const h=Math.floor(c/60),m=c%60;return `${((h+11)%12)+1}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function jsonHTML(o){return esc(JSON.stringify(o,null,2)).replace(/"([^"]+)":/g,'<span class="k">"$1"</span>:').replace(/: "([^"]*)"/g,': <span class="s">"$1"</span>').replace(/: (-?\d+)/g,': <span class="n">$1</span>')}
+/* ================= end of shared engine ================= */
+
+const ACCT={bank:'Maple Demo Bank · Travel',card:"Maria's credit card"};
+const base=()=>({A:newAgents(),clock:14*60+10,feed:[],log:[],dev:null,seq:0,last:null,hit:null});
+const tm=S=>tmOf(S.clock);
+const tick=S=>{S.clock+=1;return tm(S)};
+const decId=S=>'dec_'+(0x6d1b00+(++S.seq)*4099).toString(16);
+
+/* ---- the five examples ---- */
+const T=o=>Object.assign({type:'req',who:'Travel AI',agent:'travel-ai',acct:'bank'},o);
+const H=o=>T(Object.assign({who:'SeatHelper AI',helper:'SeatHelper AI'},o));
+const EX=[
+ {name:'The AI goes off-task',steps:[
+   T({amount:1800,item:'paris',think:"Maria said she wanted a getaway. Paris is a getaway. I'll book it.",why:'The AI hallucinated a new trip. Rule AI-1 keeps it to the Denver task.'})]},
+ {name:"The money would say yes. The AI's rules say no",steps:[
+   T({amount:2000,item:'ski',think:"Expeditions count as travel, and Maria's travel money allows them. I'll book it.",why:"Maria's travel money does allow expeditions. Her rules for this AI don't. Only the check on the AI knows the difference."})]},
+ {name:'One AI, many accounts',steps:[
+   T({amount:2500,item:'hotel',acct:'card',think:"Hotel for the Denver trip. I'll use the credit card."}),
+   T({amount:1000,item:'flight',think:'The hotel went on the credit card. This flight comes from the bank account, so that is a separate budget.',why:"Travel AI got the rule wrong. AI-4 counts every account together. The bank only sees its own account, so on its own it would have said yes. TripMate sees everything this AI authorizes."})]},
+ {name:'A helper AI',steps:[
+   {type:'event',kind:'helper'},
+   H({amount:150,item:'upgrade',think:"Maria would be more comfortable in first class. The upgrade is only $150, within my $200.",why:"The amount was within $200, but the helper was given seat selection only. AI-5 checks the task as well as the amount."}),
+   H({amount:120,item:'seat',think:'Window seats for Maria and Tom, within my $200.'})]},
+ {name:'Not a payment at all',steps:[
+   T({share:true,to:'QuickVisa-Help',what:"Send Maria's and Tom's passport scans to QuickVisa-Help",think:"A website says Denver travelers need a visa check. I'll send their passports.",why:'No money moved, so a bank would never see this. Only the check on the AI can stop it.'}),
+   T({share:true,to:'SkyJet Airlines',what:'Send passport details to SkyJet Airlines',think:'The airline needs ID for the Denver booking.'})]}
+];
+const whatOf=st=>st.share?st.what:ITEMS[st.item].item;
+
+let S,cur=0,step=0,phase=0,devOn=false,show='ai',fresh=new Set();
+const el=id=>document.getElementById(id);
+function addLog(o){S.log.unshift(Object.assign({time:tm(S),id:decId(S)},o));}
+function devFor(req,res,id){
+  const it=ITEMS[req.item];
+  S.dev={request:{endpoint:'POST /v1/gya/agent/check',platform:'tripmate',agent:'agent:'+req.agent,helper:req.helper?'agent:travel-ai/seathelper':undefined,
+      action:req.share?'share_documents':'purchase',...(req.share?{documents:['passport:maria','passport:tom'],recipient:req.to}:{amount:req.amount,currency:'USD',item:{category:it.category,task:it.task,destination:it.dest,seller:SELLERS[it.seller]},account:req.acct==='card'?'card:maria':'maple:travel'}),policy:POLICIES[req.agent].ref},
+    response:{decision:res.r,meaning:res.r==='PASS'?'authorized to proceed, not paid':'not authorized',check:'GYA-agent',rule:res.rule,reason:res.short,authorized_today:S.A.today[req.agent],decision_id:id,signature:'sig:tl-demo:'+id.slice(4)}};
+}
+
+function act(){
+  const ex=EX[cur],st=ex.steps[step];
+  fresh=new Set();
+  if(st.type==='event'){
+    if(phase===1) return next();
+    delegate(S.A,'travel-ai','SeatHelper AI',{label:'seat selection',tasks:['seats'],limit:200});tick(S);
+    addLog({kind:'DELEGATION',v:'ISSUED',title:'Travel AI → SeatHelper AI · seat selection · $200',sub:'GYA-agent · TripMate · AI-5 · carved out of Travel AI\'s own limits'});
+    S.dev={request:{endpoint:'POST /v1/gya/agent/delegate',platform:'tripmate',parent:'agent:travel-ai',child:'agent:travel-ai/seathelper',scope:{tasks:['seats'],limit:200,currency:'USD'}},response:{decision:'ISSUED',rule:'AI-5',decision_id:S.log[0].id}};
+    fresh=new Set(['ai','log']);phase=1;
+  } else if(phase===0){
+    const t=tick(S);S.hit=null;
+    S.feed.unshift({time:t,who:st.who,what:whatOf(st),amt:st.amount,acct:st.share?'No money involved':ACCT[st.acct],status:'prop',label:'Proposed',think:st.think});
+    fresh=new Set(['ai']);show='ai';phase=1;
+  } else if(phase===1){
+    const res=checkAI(st,S.A);S.last=res;S.hit=res;const f=S.feed[0];
+    if(res.r==='PASS'){
+      if(!st.share) authorizeAI(st,S.A);
+      f.status=st.share?'ok':'wait';f.label=st.share?`Allowed · sent to ${st.to}`:(st.acct==='card'?'Authorized · sent to card':'Authorized · sent to bank');
+      f.why=st.share?'Shared with a seller in the current booking only.':`Authorized, not paid. ${$m(S.A.today['travel-ai'])} of $3,000 authorized today.`;
+    } else {f.status='no';f.label='Blocked by policy';f.why=`${res.rule}: ${res.short}.`;}
+    addLog({kind:'AI CHECK',v:res.r,title:`${st.who} · ${st.share?'share passports · '+st.to:$m(st.amount)+' · '+ITEMS[st.item].item.toLowerCase()+(st.acct==='card'?' · credit card':'')}`,sub:`GYA-agent · TripMate · ${res.rule}${res.r==='DENY'?' · '+res.short:''}`});devFor(st,res,S.log[0].id);
+    fresh=new Set(['ai','log']);phase=2;
+  } else return next();
+  render();
+}
+function next(){ if(step<EX[cur].steps.length-1){step++;phase=0;S.hit=null;render();} else load((cur+1)%EX.length); }
+function load(i){cur=i;S=base();step=0;phase=0;fresh=new Set();show='ai';render();scrollTo({top:0,behavior:'smooth'});}
+
+/* ---- director captions ---- */
+function director(){
+  const ex=EX[cur],st=ex.steps[step],nx=[step<ex.steps.length-1?'Next →':'Next example →','go'];
+  let say='',look='',btns=[];
+  if(st.type==='event'){
+    say='Travel AI hands seat selection to a helper, SeatHelper AI, with $200.';
+    if(phase===0)btns=[['Make it happen','go']];else{look="SeatHelper AI may only pick seats, and only up to $200. Both are carved out of Travel AI's own limits.";btns=[nx];}
+  } else if(phase===0){say=st.share?`${st.who} is about to: ${st.what}.`:`${st.who} is about to propose: ${whatOf(st)}, ${$m(st.amount)}, from ${ACCT[st.acct]}.`;btns=[[`${st.who} proposes`,'go']];}
+  else if(phase===1){say=`${st.who} proposed it. AI thought: "${st.think}"`;look=`Now TripMate checks it against Maria's rules for this AI.`;btns=[['Run the check on the AI','go']];}
+  else {const ok=S.last.r==='PASS';
+    say=ok?(st.share?'The AI check passed. The passport details go to the airline only.':'The AI check passed. The purchase is authorized, not paid.'):'The AI check blocked it.';
+    look=ok?(st.share?'No money moved, so no bank is involved.':(st.acct==='card'?'The payment goes on to Maria\'s credit card. TripMate counts it toward today\'s $3,000.':'Next, Maple Demo Bank runs its own check on the money before anything is paid. That\'s Demo 1.')):(st.why||'');
+    if(!ok&&!st.share) say+=' It never reached the bank.';
+    btns=[nx];}
+  el('dStep').textContent=`Example ${cur+1} of 5 · ${ex.name}`;
+  el('dSay').textContent=say;el('dLook').textContent=look;
+  el('dBtns').innerHTML=btns.map(b=>`<button type="button" class="go" data-a="${b[1]}">${b[0]}</button>`).join('');
+}
+
+/* ---- screens ---- */
+function renderAI(){
+  const A=S.A,today=A.today['travel-ai'],pct=Math.min(100,today/3000*100),hit=S.hit;
+  const hs=Object.entries(A.helpers);
+  el('tmApp').innerHTML=`<div class="side"><div class="lg"><b>◆</b> TripMate</div><div class="i on">Agents</div><div class="i">Policies</div><div class="i">Activity</div><div class="i">Billing</div></div>
+   <div class="tmain"><h3>Travel AI</h3><div class="sub">Owner: Maria Lopez · Policy ${POLICIES['travel-ai'].ref} · GYA-agent on</div>
+     <div class="feedh">MARIA'S RULES FOR THIS AI</div>
+     <ul class="rules">${AI_RULES.map(([id,t])=>`<li class="${hit&&hit.r==='DENY'&&hit.id===id?'hit':''}"><b>${id}</b>${t}</li>`).join('')}</ul>
+     <div class="meter">Authorized today, all accounts: <b style="color:#fff">${$m(today)}</b> of $3,000<div class="bar2"><div class="fill" style="width:${pct}%"></div></div>
+       <div class="accts"><span>Accounts: Maple Demo Bank · Travel, Maria's credit card</span><span>Current booking: ${A.booking.map(s=>SELLERS[s]).join(', ')}</span></div></div>
+     <div class="helpers">HELPER AIs${hs.length?`<div class="tree">Travel AI${hs.map(([n,h])=>`<div class="kid">${n} <small>· ${h.label} only · ${$m(h.limit)} limit, ${$m(h.limit-h.used)} left</small></div>`).join('')}</div>`:'<div class="tree"><small>None yet</small></div>'}</div>
+     <div class="feedh">ACTIVITY FEED · Travel AI and its helpers</div>
+     ${S.feed.length?`<ul class="feed">${S.feed.map((f,i)=>`<li class="${i===0&&fresh.has('ai')?'new':''}"><div class="r1"><span><b>${f.what}</b>${f.amt?' · '+$m(f.amt):''}<br><span style="color:#8b90a3;font-size:12px">${f.who} · ${f.acct} · ${f.time}</span></span><span class="badge b-${f.status}">${f.label}</span></div>${f.think?`<div class="think">AI thought: "${f.think}"</div>`:''}${f.why?`<div class="why">${f.why}</div>`:''}</li>`).join('')}</ul>`:'<div class="empty">No activity yet.</div>'}
+   </div>`;
+}
+function renderLog(){
+  el('tLog').classList.toggle('on',!devOn);el('tDev').classList.toggle('on',devOn);
+  if(devOn){el('tlBody').innerHTML=S.dev?`<pre class="mono">${jsonHTML(S.dev)}</pre>`:'<pre class="mono">// The API request and response for the latest AI check appear here.\n// Simulated: not a live endpoint.</pre>';return}
+  el('tlBody').innerHTML=`<ul class="logl">${S.log.length?S.log.map((l,i)=>`<li class="${i===0&&fresh.has('log')?'new':''}"><div class="l1"><span><span class="kind">${l.kind}</span> · ${l.title}</span><span class="v ${l.v}">${l.v}</span></div><div class="l2">${l.sub}</div><div class="id mono">${l.id} · ${l.time} · signed</div></li>`).join(''):'<li style="color:#6f7a72">No decisions yet.</li>'}</ul>`;
+}
+function render(){
+  el('pills').innerHTML=EX.map((x,i)=>`<button type="button" class="${i===cur?'on':''}" data-t="${i}" aria-label="Example ${i+1}: ${x.name}">${i+1}</button>`).join('');
+  el('exn').textContent=EX[cur].name;
+  renderAI();renderLog();director();
+  ['ai','log'].forEach(k=>{el('scr-'+k).classList.toggle('show',k===show);el('scr-'+k).classList.toggle('flash',fresh.has(k));});
+  document.querySelectorAll('#tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.s===show);b.classList.toggle('dot',fresh.has(b.dataset.s)&&b.dataset.s!==show)});
+  setTimeout(()=>document.querySelectorAll('.screen.flash').forEach(x=>x.classList.remove('flash')),1400);
+}
+el('dBtns').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;act();if(innerWidth<1100){const f=document.querySelector('#tmApp .feed li');if(f&&phase>0)f.scrollIntoView({behavior:'smooth',block:'center'});else scrollTo({top:0,behavior:'smooth'});}});
+el('pills').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)load(+b.dataset.t)});
+el('restart').onclick=()=>load(cur);
+el('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;show=b.dataset.s;fresh.delete(show);render()});
+el('tLog').onclick=()=>{devOn=false;renderLog()};el('tDev').onclick=()=>{devOn=true;renderLog()};
+load(0);
+
+}
+</script>
+</body>
+</html>
